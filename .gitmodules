@@ -1,0 +1,3 @@
+[submodule "src/aquestalkpi_ros"]
+	path = src/aquestalkpi_ros
+	url = https://github.com/eyr1n/aquestalkpi_ros.git
