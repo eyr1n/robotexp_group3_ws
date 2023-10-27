@@ -28,8 +28,8 @@ class BBoxesGet(Node):
     def camera_callback(self, msg):
         frame = self.bridge.imgmsg_to_cv2(msg)
         res = self.predictor.inference(frame)
-        self.predictor.visualize(res[0], frame, cfg.class_names, 0.3)
-        cv2.waitKey(1)
+        #self.predictor.visualize(res[0], frame, cfg.class_names, 0.3)
+        #cv2.waitKey(1)
         bboxes = BBoxArray()
         dets = res[0]
         for label in dets:
