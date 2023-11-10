@@ -11,7 +11,15 @@ def generate_launch_description():
         [
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
-                    [PathJoinSubstitution([FindPackageShare("raspimouse"), "launch", "raspimouse.launch.py"])]
+                    [
+                        PathJoinSubstitution(
+                            [
+                                FindPackageShare("raspimouse"),
+                                "launch",
+                                "raspimouse.launch.py",
+                            ]
+                        )
+                    ]
                 )
             ),
             Node(
@@ -22,10 +30,10 @@ def generate_launch_description():
                 package="aquestalkpi_ros",
                 executable="aquestalkpi_ros",
             ),
-            Node(
-                package="nanodet_ros",
-                executable="nanodet_ros",
-            ),
+            # Node(
+            #     package="nanodet_ros",
+            #     executable="nanodet_ros",
+            # ),
             Node(
                 package="controller",
                 executable="controller",
