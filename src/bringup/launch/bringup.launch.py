@@ -1,7 +1,7 @@
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import ExecuteProcess, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import PathJoinSubstitution, TextSubstitution
+from launch.substitutions import FindExecutable, PathJoinSubstitution, TextSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -29,6 +29,18 @@ def generate_launch_description():
             Node(
                 package="controller",
                 executable="controller",
+            ),
+            ExecuteProcess(
+                cmd=[
+                    [
+                        FindExecutable(name="ros2"),
+                        " service call ",
+                        "/motor_power ",
+                        "std_srvs/srv/SetBool ",
+                        "'{data: true}'",
+                    ]
+                ],
+                shell=True,
             ),
         ]
     )
