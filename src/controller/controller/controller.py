@@ -1,18 +1,18 @@
 import rclpy
 from aquestalkpi_ros_msgs.msg import Talk
-from bbox_msgs.msg import BBox, BBoxArray
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
-from sensor_msgs.msg import Joy
+
+from nanodet_ros_msgs.msg import BBox, BBoxArray
 
 
 class Controller(Node):
     def __init__(self):
         super().__init__("controller")
-        self.subscription = self.create_subscription(BBoxArray, "/bbox_data", self.listener_callback, 10)
-        self.publisher = self.create_publisher(Twist, "/cmd_vel", 10)
+        self.subscription = self.create_subscription(BBoxArray, "nanodet_ros/bboxes", self.listener_callback, 10)
+        self.publisher = self.create_publisher(Twist, "cmd_vel", 10)
 
-        self.talker = self.create_publisher(Talk, "/aquestalkpi_ros", 10)
+        self.talker = self.create_publisher(Talk, "aquestalkpi_ros/talk", 10)
 
     def listener_callback(self, bboxarr):
         maxscore = 0

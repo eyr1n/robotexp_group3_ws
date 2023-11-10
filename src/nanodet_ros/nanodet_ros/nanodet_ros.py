@@ -14,12 +14,12 @@ class BBoxesGet(Node):
     def __init__(self):
         super().__init__("nanodet_ros")
         self.bridge = CvBridge()
-        self.subscription = self.create_subscription(Image, "/image_raw", self.camera_callback, 1)
+        self.subscription = self.create_subscription(Image, "image_raw", self.camera_callback, 1)
 
         load_config(cfg, "/home/group3/nanodet/config/legacy_v0.x_configs/nanodet-m.yml")
         self.predictor = Predictor(cfg, "/home/group3/nanodet_m.ckpt")
 
-        self.publisher = self.create_publisher(BBoxArray, "bbox_data", 10)
+        self.publisher = self.create_publisher(BBoxArray, "~/bboxes", 10)
 
     def camera_callback(self, msg):
         frame = self.bridge.imgmsg_to_cv2(msg)

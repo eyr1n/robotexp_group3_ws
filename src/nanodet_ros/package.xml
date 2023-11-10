@@ -10,6 +10,7 @@
   <depend>rclpy</depend>
   <depend>python3-opencv</depend>
   <depend>cv_bridge</depend>
+  <depend>sensor_msgs</depend>
   <depend>nanodet_ros_msgs</depend>
 
   <test_depend>ament_copyright</test_depend>

@@ -13,6 +13,8 @@
   <exec_depend>raspimouse</exec_depend>
   <exec_depend>v4l2_camera</exec_depend>
   <exec_depend>aquestalkpi_ros</exec_depend>
+  <exec_depend>nanodet_ros</exec_depend>
+  <exec_depend>controller</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
