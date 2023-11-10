@@ -16,8 +16,8 @@ class NanodetRos(Node):
         self.bridge = CvBridge()
         self.subscription = self.create_subscription(Image, "image_raw", self.camera_callback, 1)
 
-        load_config(cfg, "/home/group3/nanodet/config/legacy_v0.x_configs/nanodet-m.yml")
-        self.predictor = Predictor(cfg, "/home/group3/nanodet_m.ckpt")
+        load_config(cfg, "./nanodet/config/legacy_v0.x_configs/nanodet-m.yml")
+        self.predictor = Predictor(cfg, "./nanodet/nanodet_m.ckpt")
 
         self.publisher = self.create_publisher(BBoxArray, "~/bboxes", 10)
 
