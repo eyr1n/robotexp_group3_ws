@@ -9,6 +9,7 @@
 
   <depend>rclpy</depend>
   <depend>geometry_msgs</depend>
+  <depend>raspimouse_msgs</depend>
   <depend>aquestalkpi_ros_msgs</depend>
   <depend>nanodet_ros_msgs</depend>
 
