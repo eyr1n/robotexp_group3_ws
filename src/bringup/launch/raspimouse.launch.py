@@ -25,6 +25,7 @@ def generate_launch_description():
             Node(
                 package="v4l2_camera",
                 executable="v4l2_camera_node",
+                parameters=[{"image_size":[320, 240]}],
             ),
             Node(
                 package="aquestalkpi_ros",

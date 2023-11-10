@@ -16,8 +16,8 @@ class Controller(Node):
 
     def listener_callback(self, bboxarr):
         maxscore = 0
-        xmin = 320
-        xmax = 320
+        xmin = 160
+        xmax = 160
         for bbox in bboxarr.bboxes:
             if bbox.name == "person":
                 if bbox.score > maxscore:
@@ -27,9 +27,9 @@ class Controller(Node):
 
         center = (xmin + xmax) / 2
         twist = Twist()
-        if center < 300:
+        if center < 150:
             twist.angular.z = 0.3  # * j
-        if center > 340:
+        if center > 170:
             twist.angular.z = -0.3  # * j
 
         self.publisher.publish(twist)
