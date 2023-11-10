@@ -10,7 +10,7 @@ from nanodet_ros_msgs.msg import BBox, BBoxArray
 from .predictor import Predictor
 
 
-class BBoxesGet(Node):
+class NanodetRos(Node):
     def __init__(self):
         super().__init__("nanodet_ros")
         self.bridge = CvBridge()
@@ -47,7 +47,7 @@ class BBoxesGet(Node):
 
 def main():
     rclpy.init()
-    node = BBoxesGet()
+    node = NanodetRos()
     rclpy.spin(node)
     rclpy.destroy_node()
     rclpy.shutdown()
