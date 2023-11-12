@@ -1,21 +1,17 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>bringup</name>
+  <name>mediapipe_ros_msgs</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="rin@eyrin.jp">root</maintainer>
+  <maintainer email="rin@eyrin.jp">rin</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <exec_depend>ros2launch</exec_depend>
-  <exec_depend>raspimouse</exec_depend>
-  <exec_depend>v4l2_camera</exec_depend>
-  <exec_depend>image_transport_plugins</exec_depend>
-  <exec_depend>aquestalkpi_ros</exec_depend>
-  <exec_depend>mediapipe_ros</exec_depend>
-  <exec_depend>controller</exec_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <member_of_group>rosidl_interface_packages</member_of_group>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

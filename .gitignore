@@ -166,5 +166,4 @@ cython_debug/
 /install/
 /log/
 /aquestalkpi/
-/nanodet/
-/logs.txt
+/efficientdet.tflite

@@ -25,16 +25,16 @@ def generate_launch_description():
             Node(
                 package="v4l2_camera",
                 executable="v4l2_camera_node",
-                parameters=[{"image_size":[320, 240]}],
+                parameters=[{"image_size": [320, 240]}],
             ),
             Node(
                 package="aquestalkpi_ros",
                 executable="aquestalkpi_ros",
             ),
-            # Node(
-            #     package="nanodet_ros",
-            #     executable="nanodet_ros",
-            # ),
+            Node(
+                package="mediapipe_ros",
+                executable="mediapipe_ros",
+            ),
             Node(
                 package="controller",
                 executable="controller",

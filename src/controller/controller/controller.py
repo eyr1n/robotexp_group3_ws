@@ -1,10 +1,11 @@
 import rclpy
 from aquestalkpi_ros_msgs.msg import Talk
 from geometry_msgs.msg import Twist
+from raspimouse_msgs.msg import LightSensors
 from rclpy.node import Node
 
-from nanodet_ros_msgs.msg import BBox, BBoxArray
-from raspimouse_msgs.msg import LightSensors
+from mediapipe_ros_msgs.msg import BBoxArray
+
 
 def clamp(x, l, h):
     return min(max(x, l), h)
@@ -13,13 +14,15 @@ def clamp(x, l, h):
 class Controller(Node):
     def __init__(self):
         super().__init__("controller")
-        self.subscription = self.create_subscription(BBoxArray, "nanodet_ros/bboxes", self.listener_callback, 10)
+        self.subscription = self.create_subscription(BBoxArray, "mediapipe_ros/bboxes", self.listener_callback, 10)
         self.publisher = self.create_publisher(Twist, "cmd_vel", 10)
 
         self.talker = self.create_publisher(Talk, "aquestalkpi_ros/talk", 10)
-        
-        self.light_sensor_sub = self.create_subscription(LightSensors, "light_sensors",self.sensor_callback, 10)
-        
+
+        self.light_sensor_sub = self.create_subscription(LightSensors, "light_sensors", self.sensor_callback, 10)
+
+        self.timer = self.create_timer(0.01, self.timer_cb)
+
         self.twist = Twist()
         self.found = False
 
@@ -43,29 +46,24 @@ class Controller(Node):
             self.twist.angular.z = -0.1  # * j
         else:
             self.twist.angular.z = 0.0  # * j
-        
-
-       
-
 
     def sensor_callback(self, msg):
-        
         d = clamp((msg.forward_r + msg.forward_l) / 2, 1, 500)
-        
+
         if self.found:
-            if d >= 100: # self.twist.angular.z == 0.0 or
+            if d >= 100:  # self.twist.angular.z == 0.0 or
                 self.twist.linear.x = 0.0
-            elif 50 <= d and d <100:
+            elif 50 <= d and d < 100:
                 self.twist.linear.x = 1 / d
             else:
                 self.twist.linear.x = 0.02
         else:
             self.twist.linear.x = 0.0
-            #self.twist.angular.z = 0.2
-        
-        
-        
+            # self.twist.angular.z = 0.2
+
+    def timer_cb(self):
         self.publisher.publish(self.twist)
+
 
 def main():
     rclpy.init()
@@ -77,4 +75,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
