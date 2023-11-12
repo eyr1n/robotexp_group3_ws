@@ -72,7 +72,7 @@ class MediapipeRos(Node):
                     image,
                     f"{bbox_msg.name} ({bbox_msg.score:.2f})",
                     (bbox.origin_x, bbox.origin_y),
-                    cv2.FONT_HERSHEY_DUPLEX,
+                    cv2.FONT_HERSHEY_PLAIN,
                     1,
                     (0, 0, 0),
                     1,
