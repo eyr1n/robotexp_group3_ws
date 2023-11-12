@@ -165,5 +165,7 @@ cython_debug/
 /build/
 /install/
 /log/
+/ext/
 /aquestalkpi/
+/aquestalkpi-*.tgz
 /efficientdet.tflite

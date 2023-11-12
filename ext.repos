@@ -1,0 +1,5 @@
+repositories:
+  ext/aquestalkpi_ros:
+    type: git
+    url: https://github.com/eyr1n/aquestalkpi_ros.git
+    version: main
