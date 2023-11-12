@@ -17,7 +17,7 @@ class MediapipeRos(Node):
         super().__init__("mediapipe_ros")
         self.image_sub = self.create_subscription(Image, "image_raw", self.image_sub_cb, 1)
         self.bboxes_pub = self.create_publisher(BBoxArray, "~/bboxes", 10)
-        self.image_pub = self.create_publisher(Image, "~/image_detect", 10)
+        self.image_pub = self.create_publisher(Image, "~/image", 10)
 
         self.declare_parameter("model", "./efficientdet.tflite")
         self.declare_parameter("max_results", 5)
