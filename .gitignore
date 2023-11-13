@@ -167,5 +167,5 @@ cython_debug/
 /log/
 /ext/
 /aquestalkpi/
-/aquestalkpi-*.tgz
+/aquestalkpi.tgz
 /efficientdet.tflite
