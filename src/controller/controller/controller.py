@@ -6,9 +6,11 @@ from rclpy.node import Node
 
 from mediapipe_ros_msgs.msg import BBoxArray
 
+IMAGE_WIDTH = 320
 
-def clamp(x, l, h):
-    return min(max(x, l), h)
+
+def clamp(x, low=-float("inf"), high=float("inf")):
+    return min(max(x, low), high)
 
 
 class Controller(Node):
@@ -26,45 +28,47 @@ class Controller(Node):
         # Timer
         self.timer = self.create_timer(0.01, self.timer_cb)  # 10ms
 
-        self.twist = Twist()
+        self.twist_msg = Twist()
         self.found = False
 
     def bboxes_sub_cb(self, msg):
-        maxscore = 0
-        xmin = 160
-        xmax = 160
         self.found = False
-        for bbox in msg.bboxes:
-            if bbox.name == "person":
-                self.found = True
-                if bbox.score > maxscore:
-                    maxscore = bbox.score
-                    xmin = bbox.xmin
-                    xmax = bbox.xmax
 
-        center = (xmin + xmax) / 2
-        if center < 100:
-            self.twist.angular.z = 0.1
-        elif center > 220:
-            self.twist.angular.z = -0.1
-        else:
-            self.twist.angular.z = 0.0
+        bboxes = sorted(
+            filter(lambda x: x.name == "person", msg.bboxes),
+            key=lambda x: x.score,
+            reverse=True,
+        )
+
+        if bboxes:
+            self.found = True
+
+            center = (bboxes[0].xmin + bboxes[0].xmax) / 2  # 中心
+            threshold = 60  # 閾値
+            angular_vel = 0.1  # 角速度
+
+            if center < IMAGE_WIDTH / 2 - threshold:
+                self.twist_msg.angular.z = angular_vel
+            elif center > IMAGE_WIDTH / 2 + threshold:
+                self.twist_msg.angular.z = -angular_vel
+            else:
+                self.twist_msg.angular.z = 0.0
 
     def light_sensors_sub_cb(self, msg):
-        d = clamp((msg.forward_r + msg.forward_l) / 2, 1, 500)
+        d = clamp((msg.forward_r + msg.forward_l) / 2, low=1)
 
         if self.found:
             if d >= 100:
-                self.twist.linear.x = 0.0
+                self.twist_msg.linear.x = 0.0
             elif 50 <= d and d < 100:
-                self.twist.linear.x = 1 / d
+                self.twist_msg.linear.x = 1 / d
             else:
-                self.twist.linear.x = 0.02
+                self.twist_msg.linear.x = 0.02
         else:
-            self.twist.linear.x = 0.0
+            self.twist_msg.linear.x = 0.0
 
     def timer_cb(self):
-        self.twist_pub.publish(self.twist)
+        self.twist_pub.publish(self.twist_msg)
 
 
 def main(args=None):
