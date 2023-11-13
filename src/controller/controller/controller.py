@@ -28,15 +28,15 @@ class Controller(Node):
         # Timer
         self.timer = self.create_timer(0.01, self.timer_cb)
 
-        self.persons = []
+        self.person = None
         self.distance = 1
 
     def bboxes_sub_cb(self, msg):
-        self.persons = sorted(
-            filter(lambda x: x.name == "person", msg.bboxes),
-            key=lambda x: x.score,
-            reverse=True,
-        )
+        persons = sorted(filter(lambda x: x.name == "person", msg.bboxes), key=lambda x: x.score, reverse=True)
+        if persons:
+            self.person = persons[0]
+        else:
+            self.person = None
 
     def light_sensors_sub_cb(self, msg):
         # distance >= 1, 距離が短くなると増大
@@ -45,9 +45,8 @@ class Controller(Node):
     def timer_cb(self):  # 10msおきに呼ばれる関数
         twist_msg = Twist()
 
-        if self.persons:  # personが見つかったら
-            bbox = self.persons[0]
-            center = (bbox.xmin + bbox.xmax) / 2  # 中心
+        if self.person:  # personが見つかったら
+            center = (self.person.xmin + self.person.xmax) / 2  # 中心
             threshold = 60  # 閾値
             angular_vel = 0.1  # 角速度
 
