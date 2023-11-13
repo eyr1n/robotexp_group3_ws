@@ -30,7 +30,6 @@ class Controller(Node):
 
         self.persons = []
         self.distance = 1
-        self.twist_msg = Twist()
 
     def bboxes_sub_cb(self, msg):
         self.persons = sorted(
@@ -44,6 +43,8 @@ class Controller(Node):
         self.distance = clamp((msg.forward_r + msg.forward_l) / 2, low=1)
 
     def timer_cb(self):  # 10msおきに呼ばれる関数
+        twist_msg = Twist()
+
         if self.persons:  # personが見つかったら
             bbox = self.persons[0]
             center = (bbox.xmin + bbox.xmax) / 2  # 中心
@@ -52,23 +53,24 @@ class Controller(Node):
 
             # 旋回
             if center < IMAGE_WIDTH / 2 - threshold:
-                self.twist_msg.angular.z = angular_vel
+                twist_msg.angular.z = angular_vel
             elif center > IMAGE_WIDTH / 2 + threshold:
-                self.twist_msg.angular.z = -angular_vel
-            else:
-                self.twist_msg.angular.z = 0.0
+                twist_msg.angular.z = -angular_vel
 
             # 直進
-            if self.distance >= 100:
-                self.twist_msg.linear.x = 0.0
-            elif 50 <= self.distance and self.distance < 100:
-                self.twist_msg.linear.x = 1 / self.distance
-            else:
-                self.twist_msg.linear.x = 0.02
-        else:
-            self.twist_msg.linear.x = 0.0
+            if self.distance < 50:
+                twist_msg.linear.x = 0.02
+            elif self.distance < 100:
+                twist_msg.linear.x = 1 / self.distance
 
-        self.twist_pub.publish(self.twist_msg)
+            """ if self.distance >= 100:
+                twist_msg.linear.x = 0.0
+            elif 50 <= self.distance and self.distance < 100:
+                twist_msg.linear.x = 1 / self.distance
+            else:
+                twist_msg.linear.x = 0.02 """
+
+        self.twist_pub.publish(twist_msg)
 
 
 def main(args=None):
