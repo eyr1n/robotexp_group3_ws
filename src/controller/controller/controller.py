@@ -40,7 +40,7 @@ class Controller(Node):
             reverse=True,
         )
 
-        if bboxes:
+        if bboxes:  # personが見つかったら
             self.found = True
 
             center = (bboxes[0].xmin + bboxes[0].xmax) / 2  # 中心
@@ -55,13 +55,13 @@ class Controller(Node):
                 self.twist_msg.angular.z = 0.0
 
     def light_sensors_sub_cb(self, msg):
-        d = clamp((msg.forward_r + msg.forward_l) / 2, low=1)
+        distance = clamp((msg.forward_r + msg.forward_l) / 2, low=1)  # distance >= 1
 
         if self.found:
-            if d >= 100:
+            if distance >= 100:
                 self.twist_msg.linear.x = 0.0
-            elif 50 <= d and d < 100:
-                self.twist_msg.linear.x = 1 / d
+            elif 50 <= distance and distance < 100:
+                self.twist_msg.linear.x = 1 / distance
             else:
                 self.twist_msg.linear.x = 0.02
         else:
