@@ -4,7 +4,7 @@
   <name>controller</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="ubuntu@todo.todo">ubuntu</maintainer>
+  <maintainer email="rin@eyrin.jp">rin</maintainer>
   <license>TODO: License declaration</license>
 
   <depend>rclpy</depend>
