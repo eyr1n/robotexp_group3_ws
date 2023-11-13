@@ -15,6 +15,7 @@ from mediapipe_ros_msgs.msg import BBox, BBoxArray
 class MediapipeRos(Node):
     def __init__(self):
         super().__init__("mediapipe_ros")
+
         self.image_sub = self.create_subscription(Image, "image_raw", self.image_sub_cb, 1)
         self.bboxes_pub = self.create_publisher(BBoxArray, "~/bboxes", 10)
         self.image_pub = self.create_publisher(Image, "~/image", 10)
@@ -89,9 +90,9 @@ class MediapipeRos(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    minimal_subscriber = MediapipeRos()
-    rclpy.spin(minimal_subscriber)
-    minimal_subscriber.destroy_node()
+    mediapipe_ros = MediapipeRos()
+    rclpy.spin(mediapipe_ros)
+    mediapipe_ros.destroy_node()
     rclpy.shutdown()
 
 
