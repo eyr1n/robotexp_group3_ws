@@ -26,27 +26,31 @@ class Controller(Node):
         self.talk_pub = self.create_publisher(Talk, "aquestalkpi_ros/talk", 10)
 
         # Timer
-        self.timer = self.create_timer(0.01, self.timer_cb)  # 10ms
+        self.timer = self.create_timer(0.01, self.timer_cb)
 
+        self.persons = []
+        self.distance = 1
         self.twist_msg = Twist()
-        self.found = False
 
     def bboxes_sub_cb(self, msg):
-        self.found = False
-
-        bboxes = sorted(
+        self.persons = sorted(
             filter(lambda x: x.name == "person", msg.bboxes),
             key=lambda x: x.score,
             reverse=True,
         )
 
-        if bboxes:  # personが見つかったら
-            self.found = True
+    def light_sensors_sub_cb(self, msg):
+        # distance >= 1, 距離が短くなると増大
+        self.distance = clamp((msg.forward_r + msg.forward_l) / 2, low=1)
 
-            center = (bboxes[0].xmin + bboxes[0].xmax) / 2  # 中心
+    def timer_cb(self):  # 10msおきに呼ばれる関数
+        if self.persons:  # personが見つかったら
+            bbox = self.persons[0]
+            center = (bbox.xmin + bbox.xmax) / 2  # 中心
             threshold = 60  # 閾値
             angular_vel = 0.1  # 角速度
 
+            # 旋回
             if center < IMAGE_WIDTH / 2 - threshold:
                 self.twist_msg.angular.z = angular_vel
             elif center > IMAGE_WIDTH / 2 + threshold:
@@ -54,20 +58,16 @@ class Controller(Node):
             else:
                 self.twist_msg.angular.z = 0.0
 
-    def light_sensors_sub_cb(self, msg):
-        distance = clamp((msg.forward_r + msg.forward_l) / 2, low=1)  # distance >= 1
-
-        if self.found:
-            if distance >= 100:
+            # 直進
+            if self.distance >= 100:
                 self.twist_msg.linear.x = 0.0
-            elif 50 <= distance and distance < 100:
-                self.twist_msg.linear.x = 1 / distance
+            elif 50 <= self.distance and self.distance < 100:
+                self.twist_msg.linear.x = 1 / self.distance
             else:
                 self.twist_msg.linear.x = 0.02
         else:
             self.twist_msg.linear.x = 0.0
 
-    def timer_cb(self):
         self.twist_pub.publish(self.twist_msg)
 
 
