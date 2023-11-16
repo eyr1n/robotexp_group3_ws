@@ -33,7 +33,11 @@ def generate_launch_description():
             ),
             Node(
                 package="mediapipe_ros",
-                executable="mediapipe_ros",
+                executable="object_detector",
+            ),
+            Node(
+                package="mediapipe_ros",
+                executable="gesture_recognizer",
             ),
             Node(
                 package="controller",

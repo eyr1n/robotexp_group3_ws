@@ -18,7 +18,7 @@ class Controller(Node):
         super().__init__("controller")
 
         # Subscription
-        self.bboxes_sub = self.create_subscription(BBoxArray, "mediapipe_ros/bboxes", self.bboxes_sub_cb, 10)
+        self.bboxes_sub = self.create_subscription(BBoxArray, "object_detector/bboxes", self.bboxes_sub_cb, 10)
         self.light_sensors_sub = self.create_subscription(LightSensors, "light_sensors", self.light_sensors_sub_cb, 10)
 
         # Publisher

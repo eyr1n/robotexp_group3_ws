@@ -18,6 +18,9 @@ setup(
     license="TODO: License declaration",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": ["mediapipe_ros = mediapipe_ros.mediapipe_ros:main"],
+        "console_scripts": [
+            "object_detector = mediapipe_ros.object_detector:main",
+            "gesture_recognizer = mediapipe_ros.gesture_recognizer:main",
+        ],
     },
 )

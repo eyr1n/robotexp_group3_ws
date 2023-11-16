@@ -12,9 +12,9 @@ from sensor_msgs.msg import Image
 from mediapipe_ros_msgs.msg import BBox, BBoxArray
 
 
-class MediapipeRos(Node):
+class ObjectDetector(Node):
     def __init__(self):
-        super().__init__("mediapipe_ros")
+        super().__init__("object_detector")
 
         self.image_sub = self.create_subscription(Image, "image_raw", self.image_sub_cb, 1)
         self.bboxes_pub = self.create_publisher(BBoxArray, "~/bboxes", 10)
@@ -38,7 +38,7 @@ class MediapipeRos(Node):
             running_mode=vision.RunningMode.LIVE_STREAM,
             max_results=max_results,
             score_threshold=score_threshold,
-            result_callback=self._save_result,
+            result_callback=self.save_result,
         )
         self.detector = vision.ObjectDetector.create_from_options(options)
 
@@ -84,15 +84,15 @@ class MediapipeRos(Node):
             self.bboxes_pub.publish(bboxes_msg)
             self.image_pub.publish(self.cv_bridge.cv2_to_imgmsg(image, "rgb8"))
 
-    def _save_result(self, result: vision.ObjectDetectorResult, unused_output_image: mp.Image, timestamp_ms: int):
+    def save_result(self, result: vision.ObjectDetectorResult, unused_output_image: mp.Image, timestamp_ms: int):
         self.detection_result_list.append(result)
 
 
 def main(args=None):
     rclpy.init(args=args)
-    mediapipe_ros = MediapipeRos()
-    rclpy.spin(mediapipe_ros)
-    mediapipe_ros.destroy_node()
+    object_detector = ObjectDetector()
+    rclpy.spin(object_detector)
+    object_detector.destroy_node()
     rclpy.shutdown()
 
 
