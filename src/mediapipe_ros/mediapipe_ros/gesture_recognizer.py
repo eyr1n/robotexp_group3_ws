@@ -10,12 +10,15 @@ from mediapipe.tasks.python import vision
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 
+from mediapipe_ros_msgs.msg import Gesture, GestureArray
+
 
 class GestureRecognizer(Node):
     def __init__(self):
         super().__init__("gesture_recognizer")
 
         self.image_sub = self.create_subscription(Image, "image_raw", self.image_sub_cb, 1)
+        self.gestures_pub = self.create_publisher(GestureArray, "~/gestures", 10)
         self.image_pub = self.create_publisher(Image, "~/image", 10)
 
         self.declare_parameter("model", "./gesture_recognizer.task")
@@ -77,27 +80,28 @@ class GestureRecognizer(Node):
                     mp.solutions.drawing_styles.get_default_hand_connections_style(),
                 )
 
-                # Show top gesture classification.
-                gestures = self.recognition_result_list[0].gestures
+            gestures_msg = GestureArray()
 
-                if gestures:
-                    # print(gestures)
-                    category_name = gestures[0][0].category_name
-                    score = gestures[0][0].score
+            for i, gesture in enumerate(self.recognition_result_list[0].gestures):
+                gesture_msg = Gesture()
+                gesture_msg.name = gesture[0].category_name
+                gesture_msg.score = gesture[0].score
+                gestures_msg.gestures.append(gesture_msg)
 
-                    # Draw the text
-                    cv2.putText(
-                        image,
-                        f"{category_name} ({score:.2f})",
-                        (20, 20),
-                        cv2.FONT_HERSHEY_PLAIN,
-                        1,
-                        (0, 0, 0),
-                        1,
-                        cv2.LINE_AA,
-                    )
+                # Draw the text
+                cv2.putText(
+                    image,
+                    f"{gesture_msg.name} ({gesture_msg.score:.2f})",
+                    (20, 20 * (i + 1)),
+                    cv2.FONT_HERSHEY_PLAIN,
+                    1,
+                    (0, 0, 0),
+                    1,
+                    cv2.LINE_AA,
+                )
 
             self.recognition_result_list.clear()
+            self.gestures_pub.publish(gestures_msg)
             self.image_pub.publish(self.cv_bridge.cv2_to_imgmsg(image, "rgb8"))
 
     def save_result(self, result: vision.GestureRecognizerResult, unused_output_image: mp.Image, timestamp_ms: int):

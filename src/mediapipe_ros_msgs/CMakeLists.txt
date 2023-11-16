@@ -12,6 +12,8 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   msg/BBox.msg
   msg/BBoxArray.msg
+  msg/Gesture.msg
+  msg/GestureArray.msg
 )
 
 ament_export_dependencies(rosidl_default_runtime)
