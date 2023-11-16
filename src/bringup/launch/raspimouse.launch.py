@@ -9,6 +9,19 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     return LaunchDescription(
         [
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    [
+                        PathJoinSubstitution(
+                            [
+                                FindPackageShare("raspimouse"),
+                                "launch",
+                                "raspimouse.launch.py",
+                            ]
+                        )
+                    ]
+                )
+            ),
             Node(
                 package="v4l2_camera",
                 executable="v4l2_camera_node",
