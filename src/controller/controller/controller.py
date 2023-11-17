@@ -15,6 +15,7 @@ from mediapipe_ros_msgs.msg import BBoxArray, GestureArray
 
 IMAGE_WIDTH = 320
 
+
 class State(Enum):
     FOUND = auto()
     LOST = auto()
@@ -49,7 +50,7 @@ class Controller(Node):
         self.person = None
         self.gesture = None
         self.distance = 1
-        
+
         self.prev_state = State.LOST
         self.state = State.LOST
 
@@ -83,25 +84,26 @@ class Controller(Node):
             if self.gesture:
                 if self.gesture.name == "Thumb_Up":
                     self.state = State.RPS
- 
+
         twist_msg = Twist()
         talk_msg = Talk()
-        
+
         if self.state == State.LOST:
             if self.state != self.prev_state:
                 talk_msg.text = "どこにいるのー"
                 self.talk_pub.publish(talk_msg)
                 self.prev_state = self.state
-                
+
             twist_msg.angular.z = 0.25
             if person_found:
                 self.state = State.FOUND
+
         elif self.state == State.FOUND:
             if self.state != self.prev_state:
                 talk_msg.text = "みつけたー"
                 self.talk_pub.publish(talk_msg)
                 self.prev_state = self.state
-                
+
             if person_found:
                 threshold = 60  # 閾値
                 angular_vel = 0.15  # 角速度
@@ -125,18 +127,19 @@ class Controller(Node):
                 talk_msg.text = "ぶつかるー"
                 self.talk_pub.publish(talk_msg)
                 self.prev_state = self.state
-            
+
             if distance < 50:
                 if person_found:
                     self.state = State.FOUND
                 else:
                     self.state = State.LOST
+
         elif self.state == State.RPS:
             if self.state != self.prev_state:
                 self.twist_pub.publish(twist_msg)
                 self.rock_paper_scissors()
                 self.prev_state = self.state
-                
+
         self.twist_pub.publish(twist_msg)
 
     def rock_paper_scissors(self):
@@ -164,22 +167,20 @@ class Controller(Node):
                     or (finger == 2 and self.gesture.name == "Victory")
                 ):
                     msg.text = "まけたー"
-                    
+
                 elif (
                     (finger == 0 and self.gesture.name == "Victory")
                     or (finger == 1 and self.gesture.name == "Open_Palm")
                     or (finger == 2 and self.gesture.name == "Closed_Fist")
                 ):
                     msg.text = "かったー"
-                    
+
                 else:
                     msg.text = "あいこだね"
-                    
-                
             else:
-                msg.text = "aoueo"
+                msg.text = "よくみえなかったよ"
                 self.state = State.LOST
-                
+
         self.talk_pub.publish(msg)
         time.sleep(3)
         self.state = State.LOST
