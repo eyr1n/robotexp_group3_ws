@@ -1,6 +1,7 @@
 import random
 import threading
 import time
+from enum import Enum, auto
 
 import rclpy
 from aquestalkpi_ros_msgs.msg import Talk
@@ -12,9 +13,13 @@ from rclpy.node import Node
 
 from mediapipe_ros_msgs.msg import BBoxArray, GestureArray
 
-from .state_manager import StateManager
-
 IMAGE_WIDTH = 320
+
+class State(Enum):
+    FOUND = auto()
+    LOST = auto()
+    STOP = auto()
+    RPS = auto()
 
 
 def clamp(x, low=-float("inf"), high=float("inf")):
@@ -44,40 +49,10 @@ class Controller(Node):
         self.person = None
         self.gesture = None
         self.distance = 1
+        
+        self.prev_state = State.LOST
+        self.state = State.LOST
 
-        # state manager
-        self.manager = StateManager()
-        self.manager.add("init", self.init_cb)
-        self.manager.add("lost_person", self.lost_person_cb)
-        self.manager.add("find_person", self.find_person_cb)
-        self.manager.add("wall", self.wall_cb)
-
-        self.manager.change("init")
-        self.manager.run()
-
-        self.stopped = False
-
-    def init_cb(self):
-        msg = Talk()
-        msg.text = "start"
-        # self.talk_pub.publish(msg)
-
-    def lost_person_cb(self):
-        msg = Talk()
-        msg.text = "どこにいるのー"
-        self.talk_pub.publish(msg)
-
-    def find_person_cb(self):
-        msg = Talk()
-        msg.text = "みつけたー"
-        self.talk_pub.publish(msg)
-
-    def wall_cb(self):
-        msg = Talk()
-        msg.text = "ぶつかるー"
-        # self.talk_pub.publish(msg)
-
-    # 排他制御必須
     def bboxes_sub_cb(self, msg):
         persons = sorted(filter(lambda x: x.name == "person", msg.bboxes), key=lambda x: x.score, reverse=True)
         with self.lock:
@@ -94,57 +69,81 @@ class Controller(Node):
             else:
                 self.gesture = None
 
-    # 排他制御必須
     def light_sensors_sub_cb(self, msg):
         # distance >= 1, 距離が短くなると増大
         with self.lock:
             self.distance = clamp((msg.forward_r + msg.forward_l) / 2, low=1)
 
     def timer_cb(self):  # 10msおきに呼ばれる関数
-        twist_msg = Twist()
-
         with self.lock:
             person_found = True if self.person else False
             if person_found:
                 center = (self.person.xmin + self.person.xmax) / 2  # 中心
             distance = self.distance
-
-        if person_found:  # personが見つかったら
-            if self.stopped == False:
+            if self.gesture:
+                if self.gesture.name == "Thumb_Up":
+                    self.state = State.RPS
+ 
+        twist_msg = Twist()
+        talk_msg = Talk()
+        
+        if self.state == State.LOST:
+            if self.state != self.prev_state:
+                talk_msg.text = "どこにいるのー"
+                self.talk_pub.publish(talk_msg)
+                self.prev_state = self.state
+                
+            twist_msg.angular.z = 0.25
+            if person_found:
+                self.state = State.FOUND
+        elif self.state == State.FOUND:
+            if self.state != self.prev_state:
+                talk_msg.text = "みつけたー"
+                self.talk_pub.publish(talk_msg)
+                self.prev_state = self.state
+                
+            if person_found:
                 threshold = 60  # 閾値
-                angular_vel = 0.1  # 角速度
-                self.manager.change("find_person")
-
+                angular_vel = 0.15  # 角速度
                 # 旋回
                 if center < IMAGE_WIDTH / 2 - threshold:
                     twist_msg.angular.z = angular_vel
                 elif center > IMAGE_WIDTH / 2 + threshold:
                     twist_msg.angular.z = -angular_vel
-
                 # 直進
-                if distance < 50:
-                    twist_msg.linear.x = 0.02
-                elif distance < 100:
+                if distance < 40:
+                    twist_msg.linear.x = 0.05
+                elif distance < 80:
                     twist_msg.linear.x = 1 / distance
                 else:
-                    self.stopped = True
-                    self.manager.change("wall")
-                    self.twist_pub.publish(twist_msg)
-                    self.rock_sciccors_paper()
+                    self.state = State.STOP
+            else:
+                self.state = State.LOST
 
-        else:
-            self.manager.change("lost_person")
-            self.stopped = False
-
+        elif self.state == State.STOP:
+            if self.state != self.prev_state:
+                talk_msg.text = "ぶつかるー"
+                self.talk_pub.publish(talk_msg)
+                self.prev_state = self.state
+            
+            if distance < 50:
+                if person_found:
+                    self.state = State.FOUND
+                else:
+                    self.state = State.LOST
+        elif self.state == State.RPS:
+            if self.state != self.prev_state:
+                self.twist_pub.publish(twist_msg)
+                self.rock_paper_scissors()
+                self.prev_state = self.state
+                
         self.twist_pub.publish(twist_msg)
-        self.manager.run()
 
-    def rock_sciccors_paper(self):
+    def rock_paper_scissors(self):
         msg = Talk()
-
         msg.text = "じゃんけんしよう"
         self.talk_pub.publish(msg)
-        time.sleep(3)
+        time.sleep(2)
 
         finger = random.randint(0, 2)  # 0:グー 1:チョキ 2:パー
         if finger == 0:
@@ -155,33 +154,35 @@ class Controller(Node):
             finger_text = "パー"
         msg.text = "さいしょはグー、じゃん、けん、" + finger_text
         self.talk_pub.publish(msg)
-        time.sleep(3)
+        time.sleep(4)
 
         with self.lock:
-            gesture = self.gesture
-
-            if not gesture:
-                return
-
-            gesture_name = gesture.name
-
-            if (
-                (finger == 0 and gesture_name == "Open_Palm")
-                or (finger == 1 and gesture_name == "Closed_Fist")
-                or (finger == 2 and gesture_name == "Victory")
-            ):
-                msg.text = "まけたー"
-                self.talk_pub.publish(msg)
-            elif (
-                (finger == 0 and gesture_name == "Victory")
-                or (finger == 1 and gesture_name == "Open_Palm")
-                or (finger == 2 and gesture_name == "Closed_Fist")
-            ):
-                msg.text = "かったー"
-                self.talk_pub.publish(msg)
+            if self.gesture:
+                if (
+                    (finger == 0 and self.gesture.name == "Open_Palm")
+                    or (finger == 1 and self.gesture.name == "Closed_Fist")
+                    or (finger == 2 and self.gesture.name == "Victory")
+                ):
+                    msg.text = "まけたー"
+                    
+                elif (
+                    (finger == 0 and self.gesture.name == "Victory")
+                    or (finger == 1 and self.gesture.name == "Open_Palm")
+                    or (finger == 2 and self.gesture.name == "Closed_Fist")
+                ):
+                    msg.text = "かったー"
+                    
+                else:
+                    msg.text = "あいこだね"
+                    
+                
             else:
-                msg.text = "あいこだね"
-                self.talk_pub.publish(msg)
+                msg.text = "aoueo"
+                self.state = State.LOST
+                
+        self.talk_pub.publish(msg)
+        time.sleep(3)
+        self.state = State.LOST
 
 
 def main(args=None):
