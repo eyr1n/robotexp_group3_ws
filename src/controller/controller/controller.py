@@ -60,22 +60,22 @@ class Controller(Node):
     def init_cb(self):
         msg = Talk()
         msg.text = "start"
-        self.talk_pub.publish(msg)
+        # self.talk_pub.publish(msg)
 
     def lost_person_cb(self):
         msg = Talk()
-        msg.text = "where"
+        msg.text = "どこにいるのー"
         self.talk_pub.publish(msg)
 
     def find_person_cb(self):
         msg = Talk()
-        msg.text = "find"
+        msg.text = "みつけたー"
         self.talk_pub.publish(msg)
 
     def wall_cb(self):
         msg = Talk()
-        msg.text = "wall"
-        self.talk_pub.publish(msg)
+        msg.text = "ぶつかるー"
+        # self.talk_pub.publish(msg)
 
     # 排他制御必須
     def bboxes_sub_cb(self, msg):
@@ -104,50 +104,32 @@ class Controller(Node):
         twist_msg = Twist()
 
         with self.lock:
-            """if self.gesture.name == "Victory":
-            twist_msg.linear.x = 0.0
-            # 喋らせる処理「じゃんけんしてくれるの？」
-            time.sleep(3)
-            finger = random.randint(0, 2)  # 0:グー 1:チョキ 2:パー
-            if (
-                (finger == 0 and self.gesture.name == "Open_Palm")
-                or (finger == 1 and self.gesture.name == "Closed_Fist")
-                or (finger == 2 and self.gesture.name == "Victory")
-            ):
-                # 喋らせる処理「負けたー」
-                time.sleep(0.1)
-            elif (
-                (finger == 0 and self.gesture.name == "Victory")
-                or (finger == 1 and self.gesture.name == "Open_Palm")
-                or (finger == 2 and self.gesture.name == "Closed_Fist")
-            ):
-                # 喋らせる処理「勝ったー」
-                time.sleep(0.1)
-            else:
-                # 喋らせる処理「あいこです」
-                time.sleep(0.1)"""
+            person_found = True if self.person else False
+            if person_found:
+                center = (self.person.xmin + self.person.xmax) / 2  # 中心
+            distance = self.distance
 
-            if self.person:  # personが見つかったら
-                if self.stopped == False:
-                    center = (self.person.xmin + self.person.xmax) / 2  # 中心
-                    threshold = 60  # 閾値
-                    angular_vel = 0.1  # 角速度
-                    self.manager.change("find_person")
+        if person_found:  # personが見つかったら
+            if self.stopped == False:
+                threshold = 60  # 閾値
+                angular_vel = 0.1  # 角速度
+                self.manager.change("find_person")
 
-                    # 旋回
-                    if center < IMAGE_WIDTH / 2 - threshold:
-                        twist_msg.angular.z = angular_vel
-                    elif center > IMAGE_WIDTH / 2 + threshold:
-                        twist_msg.angular.z = -angular_vel
+                # 旋回
+                if center < IMAGE_WIDTH / 2 - threshold:
+                    twist_msg.angular.z = angular_vel
+                elif center > IMAGE_WIDTH / 2 + threshold:
+                    twist_msg.angular.z = -angular_vel
 
-                    # 直進
-                    if self.distance < 50:
-                        twist_msg.linear.x = 0.02
-                    elif self.distance < 100:
-                        twist_msg.linear.x = 1 / self.distance
-                    else:
-                        self.stopped = True
-                        self.manager.change("wall")
+                # 直進
+                if distance < 50:
+                    twist_msg.linear.x = 0.02
+                elif distance < 100:
+                    twist_msg.linear.x = 1 / distance
+                else:
+                    self.stopped = True
+                    self.manager.change("wall")
+                    self.rock_sciccors_paper()
 
             else:
                 self.manager.change("lost_person")
@@ -155,6 +137,39 @@ class Controller(Node):
 
         self.twist_pub.publish(twist_msg)
         self.manager.run()
+
+    def rock_sciccors_paper(self):
+        msg = Talk()
+
+        msg.text = "じゃんけんしよう"
+        self.talk_pub.publish(msg)
+        time.sleep(3)
+
+        msg.text = "さいしょはグー、じゃんけんぽん"
+        self.talk_pub.publish(msg)
+        time.sleep(3)
+
+        with self.lock:
+            gesture_name = self.gesture.name
+
+        finger = random.randint(0, 2)  # 0:グー 1:チョキ 2:パー
+        if (
+            (finger == 0 and gesture_name == "Open_Palm")
+            or (finger == 1 and gesture_name == "Closed_Fist")
+            or (finger == 2 and gesture_name == "Victory")
+        ):
+            msg.text = "まけたー"
+            self.talk_pub.publish(msg)
+        elif (
+            (finger == 0 and gesture_name == "Victory")
+            or (finger == 1 and gesture_name == "Open_Palm")
+            or (finger == 2 and gesture_name == "Closed_Fist")
+        ):
+            msg.text = "かったー"
+            self.talk_pub.publish(msg)
+        else:
+            msg.text = "あいこだね"
+            self.talk_pub.publish(msg)
 
 
 def main(args=None):
