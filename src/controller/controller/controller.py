@@ -1,4 +1,6 @@
+import random
 import threading
+import time
 
 import rclpy
 from aquestalkpi_ros_msgs.msg import Talk
@@ -68,6 +70,29 @@ class Controller(Node):
         twist_msg = Twist()
 
         with self.lock:
+            if self.gesture.name == "Victory":
+                twist_msg.linear.x = 0.0
+                # 喋らせる処理「じゃんけんしてくれるの？」
+                time.sleep(3)
+                finger = random.randint(0, 2)  # 0:グー 1:チョキ 2:パー
+                if (
+                    (finger == 0 and self.gesture.name == "Open_Palm")
+                    or (finger == 1 and self.gesture.name == "Closed_Fist")
+                    or (finger == 2 and self.gesture.name == "Victory")
+                ):
+                    # 喋らせる処理「負けたー」
+                    time.sleep(0.1)
+                elif (
+                    (finger == 0 and self.gesture.name == "Victory")
+                    or (finger == 1 and self.gesture.name == "Open_Palm")
+                    or (finger == 2 and self.gesture.name == "Closed_Fist")
+                ):
+                    # 喋らせる処理「勝ったー」
+                    time.sleep(0.1)
+                else:
+                    # 喋らせる処理「あいこです」
+                    time.sleep(0.1)
+
             if self.person:  # personが見つかったら
                 center = (self.person.xmin + self.person.xmax) / 2  # 中心
                 threshold = 60  # 閾値
