@@ -148,24 +148,23 @@ class Controller(Node):
 
         finger = random.randint(0, 2)  # 0:グー 1:チョキ 2:パー
         if finger == 0:
-            finger_text = "gu"
+            finger_text = "グー"
         if finger == 1:
-            finger_text = "choki"
+            finger_text = "チョキ"
         if finger == 2:
-            finger_text = "pa"
-        msg.text = "さいしょはグー、じゃん,けん," + finger_text
+            finger_text = "パー"
+        msg.text = "さいしょはグー、じゃん、けん、" + finger_text
         self.talk_pub.publish(msg)
         time.sleep(3)
 
         with self.lock:
             gesture = self.gesture
-            
+
             if not gesture:
                 return
-            
+
             gesture_name = gesture.name
 
-            
             if (
                 (finger == 0 and gesture_name == "Open_Palm")
                 or (finger == 1 and gesture_name == "Closed_Fist")
