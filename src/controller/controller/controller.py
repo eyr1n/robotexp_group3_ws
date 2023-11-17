@@ -54,7 +54,7 @@ class Controller(Node):
 
         self.manager.change("init")
         self.manager.run()
-        
+
         self.stopped = False
 
     def init_cb(self):
@@ -128,29 +128,26 @@ class Controller(Node):
                 time.sleep(0.1)"""
 
             if self.person:  # personが見つかったら
-              if self.stopped == False:
-                center = (self.person.xmin + self.person.xmax) / 2  # 中心
-                threshold = 60  # 閾値
-                angular_vel = 0.1  # 角速度
-                self.manager.change("find_person")
+                if self.stopped == False:
+                    center = (self.person.xmin + self.person.xmax) / 2  # 中心
+                    threshold = 60  # 閾値
+                    angular_vel = 0.1  # 角速度
+                    self.manager.change("find_person")
 
-                # 旋回
-                if center < IMAGE_WIDTH / 2 - threshold:
-                    twist_msg.angular.z = angular_vel
-                elif center > IMAGE_WIDTH / 2 + threshold:
-                    twist_msg.angular.z = -angular_vel
+                    # 旋回
+                    if center < IMAGE_WIDTH / 2 - threshold:
+                        twist_msg.angular.z = angular_vel
+                    elif center > IMAGE_WIDTH / 2 + threshold:
+                        twist_msg.angular.z = -angular_vel
 
-                # 直進
-                if self.distance < 50:
-                    twist_msg.linear.x = 0.02
-                elif self.distance < 100:
-                    twist_msg.linear.x = 1 / self.distance
-                else:
-                    self.stopped = True
-                    self.manager.change("wall")
-
-                #if self.distance >= 80:
-                    
+                    # 直進
+                    if self.distance < 50:
+                        twist_msg.linear.x = 0.02
+                    elif self.distance < 100:
+                        twist_msg.linear.x = 1 / self.distance
+                    else:
+                        self.stopped = True
+                        self.manager.change("wall")
 
             else:
                 self.manager.change("lost_person")
