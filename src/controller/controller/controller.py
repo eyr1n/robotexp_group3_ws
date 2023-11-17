@@ -54,6 +54,8 @@ class Controller(Node):
 
         self.manager.change("init")
         self.manager.run()
+        
+        self.stopped = False
 
     def init_cb(self):
         msg = Talk()
@@ -126,6 +128,7 @@ class Controller(Node):
                 time.sleep(0.1)"""
 
             if self.person:  # personが見つかったら
+              if self.stopped == False:
                 center = (self.person.xmin + self.person.xmax) / 2  # 中心
                 threshold = 60  # 閾値
                 angular_vel = 0.1  # 角速度
@@ -142,12 +145,16 @@ class Controller(Node):
                     twist_msg.linear.x = 0.02
                 elif self.distance < 100:
                     twist_msg.linear.x = 1 / self.distance
-
-                if self.distance >= 80:
+                else:
+                    self.stopped = True
                     self.manager.change("wall")
+
+                #if self.distance >= 80:
+                    
 
             else:
                 self.manager.change("lost_person")
+                self.stopped = False
 
         self.twist_pub.publish(twist_msg)
         self.manager.run()
