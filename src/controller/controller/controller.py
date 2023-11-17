@@ -8,7 +8,7 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallb
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
-from mediapipe_ros_msgs.msg import BBoxArray
+from mediapipe_ros_msgs.msg import BBoxArray, GestureArray
 
 IMAGE_WIDTH = 320
 
@@ -23,6 +23,9 @@ class Controller(Node):
 
         # Subscription
         self.bboxes_sub = self.create_subscription(BBoxArray, "object_detector/bboxes", self.bboxes_sub_cb, 10)
+        self.gestures_sub = self.create_subscription(
+            GestureArray, "gesture_recognizer/gestures", self.gestures_sub_cb, 10
+        )
         self.light_sensors_sub = self.create_subscription(LightSensors, "light_sensors", self.light_sensors_sub_cb, 10)
 
         # Publisher
@@ -35,6 +38,7 @@ class Controller(Node):
         self.lock = threading.Lock()
 
         self.person = None
+        self.gesture = None
         self.distance = 1
 
     # 排他制御必須
@@ -45,6 +49,14 @@ class Controller(Node):
                 self.person = persons[0]
             else:
                 self.person = None
+
+    def gestures_sub_cb(self, msg):
+        gestures = sorted(msg.gestures, key=lambda x: x.score, reverse=True)
+        with self.lock:
+            if gestures:
+                self.gesture = gestures[0]
+            else:
+                self.gesture = None
 
     # 排他制御必須
     def light_sensors_sub_cb(self, msg):
