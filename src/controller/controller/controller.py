@@ -167,14 +167,12 @@ class Controller(Node):
                     or (finger == 2 and self.gesture.name == "Victory")
                 ):
                     msg.text = "まけたー"
-
                 elif (
                     (finger == 0 and self.gesture.name == "Victory")
                     or (finger == 1 and self.gesture.name == "Open_Palm")
                     or (finger == 2 and self.gesture.name == "Closed_Fist")
                 ):
                     msg.text = "かったー"
-
                 else:
                     msg.text = "あいこだね"
             else:
