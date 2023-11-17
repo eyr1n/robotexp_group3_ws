@@ -12,6 +12,8 @@ from rclpy.node import Node
 
 from mediapipe_ros_msgs.msg import BBoxArray, GestureArray
 
+from .state_manager import StateManager
+
 IMAGE_WIDTH = 320
 
 
@@ -43,6 +45,36 @@ class Controller(Node):
         self.gesture = None
         self.distance = 1
 
+        # state manager
+        self.manager = StateManager()
+        self.manager.add("init", self.init_cb)
+        self.manager.add("lost_person", self.lost_person_cb)
+        self.manager.add("find_person", self.find_person_cb)
+        self.manager.add("wall", self.wall_cb)
+
+        self.manager.change("init")
+        self.manager.run()
+
+    def init_cb(self):
+        msg = Talk()
+        msg.text = "start"
+        self.talk_pub.publish(msg)
+
+    def lost_person_cb(self):
+        msg = Talk()
+        msg.text = "where"
+        self.talk_pub.publish(msg)
+
+    def find_person_cb(self):
+        msg = Talk()
+        msg.text = "find"
+        self.talk_pub.publish(msg)
+
+    def wall_cb(self):
+        msg = Talk()
+        msg.text = "wall"
+        self.talk_pub.publish(msg)
+
     # 排他制御必須
     def bboxes_sub_cb(self, msg):
         persons = sorted(filter(lambda x: x.name == "person", msg.bboxes), key=lambda x: x.score, reverse=True)
@@ -70,33 +102,34 @@ class Controller(Node):
         twist_msg = Twist()
 
         with self.lock:
-            if self.gesture.name == "Victory":
-                twist_msg.linear.x = 0.0
-                # 喋らせる処理「じゃんけんしてくれるの？」
-                time.sleep(3)
-                finger = random.randint(0, 2)  # 0:グー 1:チョキ 2:パー
-                if (
-                    (finger == 0 and self.gesture.name == "Open_Palm")
-                    or (finger == 1 and self.gesture.name == "Closed_Fist")
-                    or (finger == 2 and self.gesture.name == "Victory")
-                ):
-                    # 喋らせる処理「負けたー」
-                    time.sleep(0.1)
-                elif (
-                    (finger == 0 and self.gesture.name == "Victory")
-                    or (finger == 1 and self.gesture.name == "Open_Palm")
-                    or (finger == 2 and self.gesture.name == "Closed_Fist")
-                ):
-                    # 喋らせる処理「勝ったー」
-                    time.sleep(0.1)
-                else:
-                    # 喋らせる処理「あいこです」
-                    time.sleep(0.1)
+            """if self.gesture.name == "Victory":
+            twist_msg.linear.x = 0.0
+            # 喋らせる処理「じゃんけんしてくれるの？」
+            time.sleep(3)
+            finger = random.randint(0, 2)  # 0:グー 1:チョキ 2:パー
+            if (
+                (finger == 0 and self.gesture.name == "Open_Palm")
+                or (finger == 1 and self.gesture.name == "Closed_Fist")
+                or (finger == 2 and self.gesture.name == "Victory")
+            ):
+                # 喋らせる処理「負けたー」
+                time.sleep(0.1)
+            elif (
+                (finger == 0 and self.gesture.name == "Victory")
+                or (finger == 1 and self.gesture.name == "Open_Palm")
+                or (finger == 2 and self.gesture.name == "Closed_Fist")
+            ):
+                # 喋らせる処理「勝ったー」
+                time.sleep(0.1)
+            else:
+                # 喋らせる処理「あいこです」
+                time.sleep(0.1)"""
 
             if self.person:  # personが見つかったら
                 center = (self.person.xmin + self.person.xmax) / 2  # 中心
                 threshold = 60  # 閾値
                 angular_vel = 0.1  # 角速度
+                self.manager.change("find_person")
 
                 # 旋回
                 if center < IMAGE_WIDTH / 2 - threshold:
@@ -110,7 +143,14 @@ class Controller(Node):
                 elif self.distance < 100:
                     twist_msg.linear.x = 1 / self.distance
 
+                if self.distance >= 80:
+                    self.manager.change("wall")
+
+            else:
+                self.manager.change("lost_person")
+
         self.twist_pub.publish(twist_msg)
+        self.manager.run()
 
 
 def main(args=None):
