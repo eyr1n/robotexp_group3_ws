@@ -129,11 +129,12 @@ class Controller(Node):
                 else:
                     self.stopped = True
                     self.manager.change("wall")
+                    self.twist_pub.publish(twist_msg)
                     self.rock_sciccors_paper()
 
-            else:
-                self.manager.change("lost_person")
-                self.stopped = False
+        else:
+            self.manager.change("lost_person")
+            self.stopped = False
 
         self.twist_pub.publish(twist_msg)
         self.manager.run()
@@ -145,31 +146,43 @@ class Controller(Node):
         self.talk_pub.publish(msg)
         time.sleep(3)
 
-        msg.text = "さいしょはグー、じゃんけんぽん"
+        finger = random.randint(0, 2)  # 0:グー 1:チョキ 2:パー
+        if finger == 0:
+            finger_text = "gu"
+        if finger == 1:
+            finger_text = "choki"
+        if finger == 2:
+            finger_text = "pa"
+        msg.text = "さいしょはグー、じゃん,けん," + finger_text
         self.talk_pub.publish(msg)
         time.sleep(3)
 
         with self.lock:
-            gesture_name = self.gesture.name
+            gesture = self.gesture
+            
+            if not gesture:
+                return
+            
+            gesture_name = gesture.name
 
-        finger = random.randint(0, 2)  # 0:グー 1:チョキ 2:パー
-        if (
-            (finger == 0 and gesture_name == "Open_Palm")
-            or (finger == 1 and gesture_name == "Closed_Fist")
-            or (finger == 2 and gesture_name == "Victory")
-        ):
-            msg.text = "まけたー"
-            self.talk_pub.publish(msg)
-        elif (
-            (finger == 0 and gesture_name == "Victory")
-            or (finger == 1 and gesture_name == "Open_Palm")
-            or (finger == 2 and gesture_name == "Closed_Fist")
-        ):
-            msg.text = "かったー"
-            self.talk_pub.publish(msg)
-        else:
-            msg.text = "あいこだね"
-            self.talk_pub.publish(msg)
+            
+            if (
+                (finger == 0 and gesture_name == "Open_Palm")
+                or (finger == 1 and gesture_name == "Closed_Fist")
+                or (finger == 2 and gesture_name == "Victory")
+            ):
+                msg.text = "まけたー"
+                self.talk_pub.publish(msg)
+            elif (
+                (finger == 0 and gesture_name == "Victory")
+                or (finger == 1 and gesture_name == "Open_Palm")
+                or (finger == 2 and gesture_name == "Closed_Fist")
+            ):
+                msg.text = "かったー"
+                self.talk_pub.publish(msg)
+            else:
+                msg.text = "あいこだね"
+                self.talk_pub.publish(msg)
 
 
 def main(args=None):
