@@ -6,6 +6,8 @@ from rclpy.node import Node
 
 from mediapipe_ros_msgs.msg import BBoxArray
 
+from .state_manager import StateManager
+
 IMAGE_WIDTH = 320
 
 
@@ -30,6 +32,38 @@ class Controller(Node):
 
         self.person = None
         self.distance = 1
+        
+        # state manager
+        self.manager = StateManager()
+        self.manager.add("init", self.init_cb)
+        self.manager.add("lost_person", self.lost_person_cb)
+        self.manager.add("find_person", self.find_person_cb)
+        self.manager.add("wall", self.wall_cb)
+        
+        self.manager.change("init")
+        self.manager.run()
+        
+    def init_cb(self):
+        msg = Talk()
+        msg.text = "start"
+        self.talk_pub.publish(msg)
+        
+    def lost_person_cb(self):
+        msg = Talk()
+        msg.text = "where"
+        self.talk_pub.publish(msg)
+        
+    def find_person_cb(self):
+        msg = Talk()
+        msg.text = "find"
+        self.talk_pub.publish(msg)
+        
+    def wall_cb(self):
+        msg = Talk()
+        msg.text = "wall"
+        self.talk_pub.publish(msg)
+        
+        
 
     def bboxes_sub_cb(self, msg):
         persons = sorted(filter(lambda x: x.name == "person", msg.bboxes), key=lambda x: x.score, reverse=True)
@@ -44,11 +78,13 @@ class Controller(Node):
 
     def timer_cb(self):  # 10msおきに呼ばれる関数
         twist_msg = Twist()
+        
 
         if self.person:  # personが見つかったら
             center = (self.person.xmin + self.person.xmax) / 2  # 中心
             threshold = 60  # 閾値
             angular_vel = 0.1  # 角速度
+            self.manager.change("find_person")
 
             # 旋回
             if center < IMAGE_WIDTH / 2 - threshold:
@@ -57,11 +93,17 @@ class Controller(Node):
                 twist_msg.angular.z = -angular_vel
 
             # 直進
-            if self.distance < 50:
+            if self.distance < 100:
                 twist_msg.linear.x = 0.02
             elif self.distance < 100:
                 twist_msg.linear.x = 1 / self.distance
-
+            
+            if self.distance >= 80:
+                self.manager.change("wall")
+                
+        else:
+            self.manager.change("lost_person") 
+            
             """ if self.distance >= 100:
                 twist_msg.linear.x = 0.0
             elif 50 <= self.distance and self.distance < 100:
@@ -70,6 +112,11 @@ class Controller(Node):
                 twist_msg.linear.x = 0.02 """
 
         self.twist_pub.publish(twist_msg)
+        
+        
+        
+        self.manager.run()
+        
 
 
 def main(args=None):
