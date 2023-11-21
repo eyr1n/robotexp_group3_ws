@@ -8,7 +8,7 @@ from mediapipe.framework.formats import landmark_pb2
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from rclpy.node import Node
-from sensor_msgs.msg import Image, CompressedImage
+from sensor_msgs.msg import CompressedImage, Image
 
 from mediapipe_ros_msgs.msg import Gesture, GestureArray
 
