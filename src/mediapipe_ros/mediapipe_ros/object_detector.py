@@ -7,7 +7,7 @@ from cv_bridge import CvBridge
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from rclpy.node import Node
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 
 from mediapipe_ros_msgs.msg import BBox, BBoxArray
 
@@ -18,7 +18,7 @@ class ObjectDetector(Node):
 
         self.image_sub = self.create_subscription(Image, "image_raw", self.image_sub_cb, 1)
         self.bboxes_pub = self.create_publisher(BBoxArray, "~/bboxes", 10)
-        self.image_pub = self.create_publisher(Image, "~/image", 10)
+        self.image_pub = self.create_publisher(CompressedImage, "~/image/compressed", 10)
 
         self.declare_parameter("model", "./efficientdet.tflite")
         self.declare_parameter("max_results", 5)
@@ -82,7 +82,7 @@ class ObjectDetector(Node):
 
             self.detection_result_list.clear()
             self.bboxes_pub.publish(bboxes_msg)
-            self.image_pub.publish(self.cv_bridge.cv2_to_imgmsg(image, "rgb8"))
+            self.image_pub.publish(self.cv_bridge.cv2_to_compressed_imgmsg(cv2.cvtColor(image, cv2.COLOR_RGB2BGR)))
 
     def save_result(self, result: vision.ObjectDetectorResult, unused_output_image: mp.Image, timestamp_ms: int):
         self.detection_result_list.append(result)
